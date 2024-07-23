@@ -2,6 +2,8 @@
 using ChallengeTecnico_Ears.IService;
 using ChallengeTecnico_Ears.Models;
 using Microsoft.EntityFrameworkCore;
+using ChallengeTecnico_Ears.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace ChallengeTecnico_Ears.Services
 {
@@ -9,27 +11,32 @@ namespace ChallengeTecnico_Ears.Services
     {
 
         private readonly ContextChallenge _context;
-        public PersonService(ContextChallenge dbContext)
+        private readonly ILogger<PersonService> _logger;
+        public PersonService(ContextChallenge dbContext, ILogger<PersonService> logger)
         {
             _context = dbContext;
+            _logger = logger;
         }
 
 
         public List<PersonModel> GetPersonList()
         {
+            List<PersonModel> personList = new List<PersonModel>();
 
-            List<PersonModel> _Person = new List<PersonModel>();
+            try
+            {
+                personList = _context.T_Person
+                    .Include(p => p.Offices)
+                    .Where(p => p.Active && p.EmployeeFile > 1003)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener la lista de personas.");
+                throw new DatabaseException("Error al obtener la lista de personas.", ex);
+            }
 
-            /* Aquí será requerido implementar la lógica para llamar y recuperar los datos de la base 
-               Se requiere recuperar los datos de las personas activas con sus respectivas oficinas  
-               y luego filtrar a las personas con legajo mayor a 1003 */
-
-            /* Será valorada la percepción y solución de posibles escenarios de error */
-
-            return _Person;
+            return personList;
         }
-
-
-
     }
 }

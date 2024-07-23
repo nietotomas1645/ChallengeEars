@@ -1,3 +1,4 @@
+using ChallengeTecnico_Ears.Exceptions;
 using ChallengeTecnico_Ears.IService;
 using ChallengeTecnico_Ears.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -9,24 +10,33 @@ namespace ChallengeTecnico_Ears.Controllers
     [Route("[controller]")]
     public class PersonController : ControllerBase
     {
-       
-
         private readonly ILogger<PersonController> _logger;
+        private readonly IPersonService _personService;
 
-        /* Se requiere que se haga uso del servicio ya creado previamente */ 
-
-        /* Sera valorada la percepción y solución de posibles escenarios de error */
-
-        public PersonController( ILogger<PersonController> logger)
+        public PersonController(ILogger<PersonController> logger, IPersonService personService)
         {
             _logger = logger;
-           
+            _personService = personService;
         }
 
         [HttpGet]
-        public List<PersonModel> Get()
+        public ActionResult<List<PersonModel>> Get()
         {
-            return null;
+            try
+            {
+                var persons = _personService.GetPersonList();
+                return Ok(persons);
+            }
+            catch (DatabaseException ex)
+            {
+                _logger.LogError(ex, "Error en la base de datos al obtener la lista de personas.");
+                return StatusCode(500, "Error en la base de datos al obtener la lista de personas");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en el servidor al obtener las personas.");
+                return StatusCode(500, "Error en el servidor al obtener las personas.");
+            }
         }
     }
 }
